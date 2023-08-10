@@ -17,7 +17,7 @@ The first column of the dataset is the label of the image. A label is the number
 **Forward propagation**
 
 zero layer = input vector = 28*28 * 0 = 784 * 0 <br>
-$A_0 = X$<br>
+$A_0 = X^T$<br>
 
 first layer - middle <br>
 $Z_1 = W_1 A_0 + b_1$<br>
