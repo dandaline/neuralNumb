@@ -5,31 +5,31 @@ import os
 
 
 def loadParams():
-    if os.path.exists("weightOne.npy" and "biasOne.npy"
-                      and "weightTwo.npy" and "biasTwo.npy"):
-        weightOne = np.load("weightOne.npy")
-        biasOne = np.load("biasOne.npy")
-        weightTwo = np.load("weightTwo.npy")
-        biasTwo = np.load("biasTwo.npy")
+    if os.path.exists("W_1.npy" and "b_1.npy"
+                      and "W_2.npy" and "b_2.npy"):
+        W_1 = np.load("W_1.npy")
+        b_1 = np.load("b_1.npy")
+        W_2 = np.load("W_2.npy")
+        b_2 = np.load("b_2.npy")
     else:
-        weightOne, biasOne, weightTwo, biasTwo = initParams()
-        saveParams(weightOne, biasOne, weightTwo, biasTwo)
-    return weightOne, biasOne, weightTwo, biasTwo
+        W_1, b_1, W_2, b_2 = initParams()
+        saveParams(W_1, b_1, W_2, b_2)
+    return W_1, b_1, W_2, b_2
 
 
-def saveParams(weightOne, biasOne, weightTwo, biasTwo):
-    np.save("weightOne.npy", weightOne)
-    np.save("biasOne.npy", biasOne)
-    np.save("weightTwo.npy", weightTwo)
-    np.save("biasTwo.npy", biasTwo)
+def saveParams(W_1, b_1, W_2, b_2):
+    np.save("W_1.npy", W_1)
+    np.save("b_1.npy", b_1)
+    np.save("W_2.npy", W_2)
+    np.save("b_2.npy", b_2)
 
 
 def initParams():
-    weightOne = np.random.rand(10, 784) - 0.5
-    biasOne = np.random.rand(10, 1) - 0.5
-    weightTwo = np.random.rand(10, 10) - 0.5
-    biasTwo = np.random.rand(10, 1) - 0.5
-    return weightOne, biasOne, weightTwo, biasTwo
+    W_1 = np.random.rand(10, 784) - 0.5
+    b_1 = np.random.rand(10, 1) - 0.5
+    W_2 = np.random.rand(10, 10) - 0.5
+    b_2 = np.random.rand(10, 1) - 0.5
+    return W_1, b_1, W_2, b_2
 
 
 def prepareData():
@@ -47,24 +47,20 @@ def prepareData():
 
 
 def reLu(Z):
-    for i in Z:
-        if Z[i] > 0:
-            break
-        else:
-            Z[i] = 0
-    return Z
+    return np.maximum(Z, 0)
 
 
 def softMax(Z):
-    return np.exp(Z) / np.sum(np.exp(Z))
+    exp = np.exp(Z - np.max(Z)) 
+    return exp / exp.sum(axis=0)
 
 
-def forwardProp(X, weightOne, biasOne, weightTwo, biasTwo):
+def forwardProp(X, W_1, b_1, W_2, b_2):
     # first layer
-    Z_1 = np.dot(weightOne, X) + biasOne  # lin regression
+    Z_1 = np.dot(W_1, X) + b_1  # lin regression
     A_1 = reLu(Z_1)  # activation function
     # second layer
-    Z_2 = np.dot(weightTwo, A_1) + biasTwo  # lin regression
+    Z_2 = np.dot(W_2, A_1) + b_2  # lin regression
     A_2 = softMax(Z_2)  # propapility normalization
     return Z_1, A_1, Z_2, A_2
 
@@ -83,52 +79,56 @@ def derivativeReLu(Z):
 
 def backwardProp(Z_1, A_1, Z_2, A_2, X, Y):
     m = Y.size
-    dZ_2 = A_2 - oneHot(Y)
-    dWeightTwo = 1/m * np.dot(dZ_2, A_1.T)
-    dBiasTwo = 1/m * np.sum(dZ_2, 2)
-    dZ_1 = np.dot(weightTwo.T, dZ_2) * derivativeReLu(Z_1)
-    dWeightOne = 1/m * np.dot(dZ_1, X.T)
-    dBiasOne = 1/m * np.sum(dZ_1, 2)
-    return dWeightOne, dBiasOne, dWeightTwo, dBiasTwo
+    oneHot_Y = oneHot(Y)
+    dZ_2 = 2 * (A_2 - oneHot_Y)
+    dW_2 = 1/m * np.dot(dZ_2, A_1.T)
+    db_2 = 1/m * np.sum(dZ_2, 1)
+    dZ_1 = np.dot(W_2.T, dZ_2) * derivativeReLu(Z_1)
+    dW_1 = 1/m * np.dot(dZ_1, X.T)
+    db_1 = 1/m * np.sum(dZ_1, 1)
+    return dW_1, db_1, dW_2, db_2
 
 
-def updateParams(weightOne, biasOne, weightTwo, biasTwo, dWeightOne, dBiasOne,
-                 dWeightTwo, dBiasTwo, learningRate):
-    weightOne = weightOne - learningRate * dWeightOne
-    biasOne = biasOne - learningRate * dBiasOne
-    weightTwo = weightTwo - learningRate * dWeightTwo
-    biasTwo = biasTwo - learningRate * dBiasTwo
-    return weightOne, biasOne, weightTwo, biasTwo
+def updateParams(W_1, b_1, W_2, b_2, dW_1, db_1,
+                 dW_2, db_2, learningRate):
+    W_1 = W_1 - learningRate * dW_1
+    b_1 = b_1 - learningRate * np.reshape(db_1, (10, 1))
+    W_2 = W_2 - learningRate * dW_2
+    b_2 = b_2 - learningRate * np.reshape(db_2, (10, 1))
+    return W_1, b_1, W_2, b_2
 
 
-def gradientDecent(weightOne, biasOne, weightTwo, biasTwo,
+def getPrediction(A_2):
+    return np.argmax(A_2, 0)
+
+
+def getAccuracy(predictions, Y):
+    print(predictions, Y)
+    return np.sum(predictions == Y) / Y.size
+
+
+def gradientDecent(W_1, b_1, W_2, b_2,
                    pixels, labels, iterations, learningRate):
     for i in range(iterations):
-        Z_1, A_1, Z_2, A_2 = forwardProp(pixels, weightOne, biasOne,
-                                         weightTwo, biasTwo)
+        Z_1, A_1, Z_2, A_2 = forwardProp(pixels, W_1, b_1,
+                                         W_2, b_2)
 
-        dWeightOne, dBiasOne, dWeightTwo, dBiasTwo = backwardProp(Z_1, A_1,
-                                                                  Z_2, A_2,
-                                                                  pixels,
-                                                                  labels)
+        dW_1, db_1, dW_2, db_2 = backwardProp(Z_1, A_1, Z_2, A_2,
+                                              pixels, labels)
+        if (i % 10 == 0):
+            print("iteration: ", i) 
+            predictions = getPrediction(A_2)
+            print(getAccuracy(predictions, labels))
 
-        weightOne, biasOne, weightTwo, biasTwo = updateParams(
-                                                        weightOne,
-                                                        biasOne,
-                                                        weightTwo,
-                                                        biasTwo,
-                                                        dWeightOne,
-                                                        dBiasOne,
-                                                        dWeightTwo,
-                                                        dBiasTwo,
-                                                        0.01)
-    return weightOne, biasOne, weightTwo, biasTwo
+        W_1, b_1, W_2, b_2 = updateParams(W_1, b_1, W_2, b_2,
+                                          dW_1, db_1, dW_2, db_2,
+                                          learningRate)
+    return W_1, b_1, W_2, b_2
 
 
-pixels, labels = prepareData()
-weightOne, biasOne, weightTwo, biasTwo = loadParams()
-weightOne, biasOne, weightTwo, biasTwo = gradientDecent(weightOne, biasOne,
-                                                        weightTwo, biasTwo,
-                                                        pixels, labels,
-                                                        2000, 0.1)
-saveParams(weightOne, biasOne, weightTwo, biasTwo)
+labels, pixels = prepareData()
+W_1, b_1, W_2, b_2 = loadParams()
+W_1, b_1, W_2, b_2 = gradientDecent(W_1, b_1, W_2, b_2,
+                                    pixels, labels,
+                                    100, 0.1)
+saveParams(W_1, b_1, W_2, b_2)
