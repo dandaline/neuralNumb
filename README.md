@@ -21,11 +21,11 @@ $A_0 = X$<br>
 
 first layer - middle <br>
 $Z_1 = W_1 A_0 + b_1$<br>
-$A_1 =  \forall z \in Z¹: ReLu(z_i) =
-                                    \begin{cases}
-                                    z & \text{if } z_m > 0 \\
-                                    0 & \text{if } z_m \leq 0
-                                    \end{cases}$ <br>
+A_1 = \forall z \in Z^1: \text{ReLU}(z_i) =
+  \begin{cases}
+  z & \text{if } z_m > 0 \\
+  0 & \text{if } z_m \leq 0
+  \end{cases} <br>
 
 third layer - output <br>
 $Z_2 = W_2 A_1 + b_2$<br>
